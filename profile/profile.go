@@ -14,6 +14,7 @@ import (
 	"github.com/micro/go-micro/v3/broker/nats"
 	"github.com/micro/go-micro/v3/client"
 	"github.com/micro/go-micro/v3/config"
+	metricsPrometheus "github.com/micro/go-micro/v3/metrics/prometheus"
 	"github.com/micro/go-micro/v3/registry"
 	"github.com/micro/go-micro/v3/registry/etcd"
 	"github.com/micro/go-micro/v3/registry/mdns"
@@ -34,6 +35,7 @@ import (
 	microBroker "github.com/micro/micro/v3/service/broker"
 	microClient "github.com/micro/micro/v3/service/client"
 	microConfig "github.com/micro/micro/v3/service/config"
+	microNetwork "github.com/micro/micro/v3/service/network"
 	microRegistry "github.com/micro/micro/v3/service/registry"
 	microRouter "github.com/micro/micro/v3/service/router"
 	microRuntime "github.com/micro/micro/v3/service/runtime"
@@ -127,6 +129,11 @@ var Kubernetes = &Profile{
 		// config configmap
 		// store ...
 		microAuth.DefaultAuth = jwt.NewAuth()
+		prometheusReporter, err := metricsPrometheus.New()
+		if err != nil {
+			return err
+		}
+		microNetwork.DefaultMetricsReporter = prometheusReporter
 		setupJWTRules()
 		return nil
 	},
@@ -139,6 +146,11 @@ var Platform = &Profile{
 		microAuth.DefaultAuth = jwt.NewAuth()
 		microConfig.DefaultConfig, _ = config.NewConfig()
 		microRuntime.DefaultRuntime = kubernetes.NewRuntime()
+		prometheusReporter, err := metricsPrometheus.New()
+		if err != nil {
+			return err
+		}
+		microNetwork.DefaultMetricsReporter = prometheusReporter
 		setBroker(nats.NewBroker(broker.Addrs("nats-cluster")))
 		setRegistry(etcd.NewRegistry(registry.Addrs("etcd-cluster")))
 		setupJWTRules()
